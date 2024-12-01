@@ -1,0 +1,106 @@
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### IntelliJ IDEA ###
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### Kotlin ###
+.kotlin
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+# Gradle 관련 파일
+.gradle/
+
+# IntelliJ IDEA / Android Studio 관련 파일
+.idea/
+*.hprof
+
+# 로그 파일
+*.log
+*.out
+*.class
+
+# Kotlin 컴파일러 생성 파일
+*.kotlin_module
+
+# 디버그 및 캐시 파일
+*.swp
+*.temp
+*.tmp
+*.bak
+
+# 시스템 파일
+Thumbs.db
+*.pyc
+*.pyo
+*.exe
+*.dll
+*.so
+
+# 환경 파일
+*.env
+local.properties
+
+# JetBrains IDE 설정 파일
+.idea/*
+
+# Android 빌드
+/capture/
+/output.json
+/coverage/
+
+# Android NDK
+.externalNativeBuild/
+
+# Test 결과
+/test-results/
+test-results.xml
+.gradle-test-kit/
+reports/
+
+# Firebase 관련
+firebase-debug.log
+service-account.json
+
+# Git 관리 대상 제외
+*.orig
+*.rej
+
+# 추가: Kotlin DSL 사용 시 Gradle 설정 파일
+gradle.kts
