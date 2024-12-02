@@ -1,12 +1,30 @@
 package org.example
 
 import kotlinx.coroutines.*
+import org.example.chap5.*
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main() = runBlocking<Unit>(context = CoroutineName("Main")){
+    //Ex_Basic()
+
     //Ex_4_1_2()
 
-    Ex_4_3_1()
+    //Ex_4_3_1()
+
+    //Ex_4_4_1()
+
+    //Ex_4_4_17()
+
+    //Ex_4_4_20()
+
+    //Ex_4_4_21()
+
+    //Ex_5_1_1()
+
+    Ex_5_5_1()
+}
+
+fun Ex_Basic() = runBlocking<Unit> {
     // Main.kt의 edit Configuration에서 VM options부분에 -Dkotlinx.coroutines.debug을 설정해야 한다.
     println("[${Thread.currentThread().name}] 실행")
 
@@ -84,3 +102,59 @@ fun Ex_4_3_1() = runBlocking<Unit> {
 
 fun getElapsedTime(startTime: Long) : String = "지난 시간: ${System.currentTimeMillis() - startTime}ms"
 
+fun printJobState(job : Job) {
+    println(
+        "Job State\n" +
+        "isActive >> ${job.isActive}\n" +
+        "isCancelled >> ${job.isCancelled}\n" +
+        "isCompleted >> ${job.isCompleted}"
+    )
+}
+
+fun Ex_4_4_1() = runBlocking<Unit> {
+    val startTime = System.currentTimeMillis()
+    val longJob : Job = launch(Dispatchers.Default) {
+        repeat(10) { repeatTime ->
+            delay(1000L)
+            println("[${getElapsedTime(startTime)}] 반복 횟수 $repeatTime")
+        }
+    }
+    delay(3500L)
+    longJob.cancel()
+}
+
+fun Ex_4_4_17() = runBlocking<Unit> {
+    val job : Job = launch(start = CoroutineStart.LAZY) {
+        delay(1000L)
+    }
+    printJobState(job)
+
+    val job2 : Job = launch{
+        delay(1000L)
+    }
+    printJobState(job2)
+}
+
+fun Ex_4_4_20() = runBlocking<Unit> {
+    val whileJob : Job = launch(Dispatchers.Default) {
+        while(true) {
+
+        }
+    }
+
+    whileJob.cancel()
+    printJobState(whileJob)
+}
+
+fun Ex_4_4_21() = runBlocking<Unit> {
+    val job : Job = launch {
+        delay(5000L)
+    }
+    job.cancelAndJoin()
+    printJobState(job)
+
+    //코루틴 라이브러리 1.7.2버전을 기준으로 Job 구현체들은 toString 함수를 오버라이드하였다.
+    //아래의 코드를 실행하면 toString이 문자열에 포함되도록 만들어져 있다.
+    //대신, 이 문자열은 디버깅용이어서 로그를 출력하는 데만 사용하는 편이 좋다.
+    println(job)
+}
