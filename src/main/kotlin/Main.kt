@@ -21,7 +21,11 @@ fun main() = runBlocking<Unit>(context = CoroutineName("Main")){
 
     //Ex_5_1_1()
 
-    Ex_5_5_1()
+    //Ex_5_5_1()
+
+    //Ex_5_5_9()
+
+    Ex_5_5_10()
 }
 
 fun Ex_Basic() = runBlocking<Unit> {
