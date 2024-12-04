@@ -136,3 +136,24 @@ fun Ex_5_5_10() = runBlocking<Unit> {
     //withContext 를 호출시 코루틴은 유지된 채, 실행 스레드만 변경되며 동기적으로 실행.
     //async-await 은 새로운 코루틴을 만들지만 await 함수를 통해 순차 처리가 되어 동기적으로 실행.
 }
+
+//withContext 는 여러개의 독립적인 작업을 병렬로 실행되야 하는상황에서는 성능에 문제가 있을 수 있다.
+fun Ex_5_5_11() = runBlocking<Unit> {
+    val startTime = System.currentTimeMillis()
+    val helloStr = withContext(Dispatchers.IO) {
+        delay(1000L)
+        return@withContext "Hello"
+    }
+    val worldStr = withContext(Dispatchers.IO) {
+        delay(1000L)
+        return@withContext "World"
+    }
+
+    println("[${getElapsedTime(startTime)}] $helloStr $worldStr")
+
+    /*
+     * [지난 시간: 2033ms] Hello World
+     */
+
+    //이 문제를 해결하기 위해서는 async-awaitAll를 사용하면 된다.
+}

@@ -2,6 +2,10 @@ package org.example
 
 import kotlinx.coroutines.*
 import org.example.chap5.*
+import org.example.chap6.Ex_6_1
+import org.example.chap6.Ex_6_11
+import org.example.chap6.Ex_6_5
+import org.example.chap6.Ex_6_8
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main() = runBlocking<Unit>(context = CoroutineName("Main")){
@@ -25,7 +29,17 @@ fun main() = runBlocking<Unit>(context = CoroutineName("Main")){
 
     //Ex_5_5_9()
 
-    Ex_5_5_10()
+    //Ex_5_5_10()
+
+    //Ex_5_5_11()
+
+    //Ex_6_1()
+
+    //Ex_6_5()
+
+    //Ex_6_8()
+
+    Ex_6_11()
 }
 
 fun Ex_Basic() = runBlocking<Unit> {
