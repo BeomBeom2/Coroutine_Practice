@@ -1,7 +1,7 @@
 package org.example.chap5
 
 import kotlinx.coroutines.*
-import org.example.getElapsedTime
+import org.example.util.getElapsedTime
 
 fun Ex_5_1_1() = runBlocking<Unit> {
     val networkDeferred: Deferred<String> = async(Dispatchers.IO) {
