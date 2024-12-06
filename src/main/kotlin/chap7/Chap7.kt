@@ -1,6 +1,9 @@
 package org.example.chap7
 
 import kotlinx.coroutines.*
+import org.example.util.getElapsedTime
+import org.example.util.printJobState
+import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun Ex_7_7_2() = runBlocking<Unit> {
@@ -79,4 +82,74 @@ fun Ex_7_7_9() = runBlocking<Unit> {
         println("invokeOnCompletion 콜백 실행됨")
     }
     infiniteJob.cancel()
+}
+
+
+fun Ex_7_7_10() = runBlocking<Unit> {
+    val startTime = System.currentTimeMillis()
+    val parentJob = launch {
+        launch {
+            delay(1000L)
+            println("[${getElapsedTime(startTime)}] 자식 코루틴 실행 완료")
+        }
+        println("[${getElapsedTime(startTime)}] 부모 코루틴의 마지막 실행 코드")
+    }
+    parentJob.invokeOnCompletion { // 부모 코루틴이 종료될 시 호출되는 콜백 등록
+        println("[${getElapsedTime(startTime)}] 부모 코루틴 실행 완료")
+    }
+    delay(500L)
+    printJobState(parentJob) // 실행 중과 실행 완료 중의 상태는 동일.
+
+    /*
+     * [지난 시간: 13ms] 부모 코루틴의 마지막 실행 코드
+     * Job State
+     * isActive >> true
+     * isCancelled >> false
+     * isCompleted >> false
+     * [지난 시간: 1025ms] 자식 코루틴 실행 완료
+     * [지난 시간: 1026ms] 부모 코루틴 실행 완료
+     */
+}
+
+class CustomCoroutineScope : CoroutineScope {
+    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+    override val coroutineContext: CoroutineContext
+        get() = Job() + newSingleThreadContext("CustomScopeThread")
+}
+fun Ex_7_7_12() {
+    //CustomCoroutineScope 인터페이스 구현을 통한 생성
+    val coroutineScope = CustomCoroutineScope() //CustomCoroutineScope 인스턴스화
+    coroutineScope.launch {
+        delay(100L)
+        println("[${Thread.currentThread().name}] 코루틴 실행 완료")
+    }
+    Thread.sleep(1000L)
+
+    //CoroutineScope 함수를 사용하는 방법
+    val coroutineScope1 = CoroutineScope(Dispatchers.IO)
+    coroutineScope1.launch {
+        delay(100L)
+        println("[${Thread.currentThread().name}] 코루틴 실행 완료")
+    }
+    Thread.sleep(1000L)
+
+    //[CustomScopeThread @coroutine#2] 코루틴 실행 완료
+    //[DefaultDispatcher-worker-1 @coroutine#3] 코루틴 실행 완료
+}
+
+@OptIn(ExperimentalStdlibApi::class, ExperimentalCoroutinesApi::class)
+fun Ex_7_7_13() {
+    val newScope = CoroutineScope(CoroutineName("MyCoroutine") + Dispatchers.IO)
+    newScope.launch(CoroutineName("LaunchCoroutine")) {
+        println(this.coroutineContext[CoroutineName])
+        println(this.coroutineContext[CoroutineDispatcher])
+        val launchJob = this.coroutineContext[Job]
+        val newScopeJob = newScope.coroutineContext[Job]
+        println("launchJob?.parent === newScopeJob 이다. (${launchJob?.parent === newScopeJob})")
+    }
+    Thread.sleep(1000L)
+
+    //CoroutineName(LaunchCoroutine)
+    //Dispatchers.IO
+    //launchJob?.parent === newScopeJob 이다. (true)
 }
