@@ -201,3 +201,93 @@ fun Ex_7_7_18_1() = runBlocking<Unit> {
      * true
      */
 }
+
+fun Ex_7_7_24() = runBlocking<Unit> {
+    val newRootJob = Job()
+    launch(CoroutineName("Coroutine1") + newRootJob) {
+        launch(CoroutineName("Coroutine3")) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Coroutine4")) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Coroutine2") + newRootJob) {
+            launch(CoroutineName("Coroutine5")) {
+                delay(100L)
+                println("[${Thread.currentThread().name}] 코루틴 실행")
+            }
+        }
+    }
+
+    /*
+     *runBlocking(Job)
+     * (독립적인 newRootJob)
+     *   └── Coroutine1 (Job: newRootJob)
+     *       ├── Coroutine3 (Job: Coroutine1의 새로운 Job)
+     *       ├── Coroutine4 (Job: Coroutine1의 새로운 Job)
+     *       └── Coroutine2 (Job: newRootJob)
+     *           └── Coroutine5 (Job: Coroutine2의 새로운 Job)
+     */
+}
+
+
+
+fun Ex_7_7_24_2() = runBlocking<Unit> {
+    launch(CoroutineName("Coroutine1")) {
+        launch(CoroutineName("Coroutine3")) {
+            // 코루틴 실행
+        }
+        launch(CoroutineName("Coroutine4")) {
+            // 코루틴 실행
+        }
+        launch(CoroutineName("Coroutine2")) {
+            launch(CoroutineName("Coroutine5")) {
+                // 코루틴 실행
+            }
+        }
+    }
+    /*
+    *runBlocking(Job)
+    *└── Coroutine1(Job)
+    *    ├── Coroutine3(Job)
+    *    ├── Coroutine4(Job)
+    *    └── Coroutine2(Job)
+    *        └── Coroutine5(Job)
+
+    모든 코루틴이 하나의 Job 에서 실행되는 것은 아니다.
+    코드에서 각 코루틴은 자체적인 Job 을 생성하며, 이 Job 들은 계층 구조로 연결된다.
+     */
+}
+
+//동일한 Job에서 실행하려면, 아래의 코드를 참고하라
+fun Ex_7_7_24_3() = runBlocking<Unit> {
+    val sharedJob = Job(coroutineContext[Job])
+    launch(CoroutineName("Coroutine1") + sharedJob) {
+        launch(CoroutineName("Coroutine3") + sharedJob) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Coroutine4") + sharedJob) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Coroutine2") + sharedJob) {
+            launch(CoroutineName("Coroutine5") + sharedJob) {
+                delay(100L)
+                println("[${Thread.currentThread().name}] 코루틴 실행")
+            }
+        }
+    }
+    /*
+     *runBlocking(Job)
+     *└── sharedJob
+     *    └── Coroutine1 (Job: sharedJob)
+     *        ├── Coroutine3 (Job: sharedJob)
+     *        ├── Coroutine4 (Job: sharedJob)
+     *        └── Coroutine2 (Job: sharedJob)
+     *            └── Coroutine5 (Job: sharedJob)
+
+    */
+}
