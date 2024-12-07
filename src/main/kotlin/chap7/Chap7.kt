@@ -153,3 +153,51 @@ fun Ex_7_7_13() {
     //Dispatchers.IO
     //launchJob?.parent === newScopeJob 이다. (true)
 }
+
+
+//launch, runBlocking, async 의 코루틴 빌더 함수에서 람다식도 CoroutineScope 객체를 람다식의 수신 객체로 제공한다.
+//따라서 코루틴의 실행 환경에 접근할 수 있었다.
+fun Ex_7_7_16() = runBlocking<Unit> {
+    this.launch {  // this 는 runBlocking 에서 생성된 CoroutineScope
+        this.async { // this 는 launch 블록의 CoroutineScope, 결국 모두 runBlocking 의 CoroutineScope
+
+        }
+    }
+}
+
+//runBlocking 람다식의 CoroutineScope 로 관리되는 범위 와는 아무런 상관이 없는 CoroutineScope 을 생성하는 예제.
+//대신 코루틴의 구조화를 깨는 것은 안전하게 비동기 작업이 이루어지지 않을 수 있으므로, 최대한 지양해야한다.
+fun Ex_7_7_18() = runBlocking<Unit> {
+    launch(CoroutineName("Coroutine1")) {
+        launch(CoroutineName("Coroutine3")) {
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        CoroutineScope(Dispatchers.IO).launch(CoroutineName("Coroutine4")) {
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+    }
+    launch(CoroutineName("Coroutine2")) {
+        println("[${Thread.currentThread().name}] 코루틴 실행")
+    }
+
+    /*
+     * [DefaultDispatcher-worker-1 @Coroutine4#6] 코루틴 실행
+     * [main @Coroutine2#4] 코루틴 실행
+     * [main @Coroutine3#5] 코루틴 실행
+     */
+}
+
+//CoroutineScope 의 coroutineContext 에는 항상 Job 이 포함되어있다.
+//하지만 Job 객체는 꼭 코루틴이 아닐 수도 있다. 즉, 모든 코루틴은 Job 을 포함하지만, Job 객체는 반드시 코루틴에 종속적이지는 않다.
+
+fun Ex_7_7_18_1() = runBlocking<Unit> {
+    val job = Job()
+    println(job.isActive)
+    job.complete()
+    println(job.isCompleted)
+
+    /*
+     * true
+     * true
+     */
+}
