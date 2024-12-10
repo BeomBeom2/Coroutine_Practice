@@ -43,7 +43,7 @@ fun Ex_7_7_3() = runBlocking<Unit> {
 fun Ex_7_7_4() = runBlocking<Unit> {
     val runBlockingJob = coroutineContext[Job] // 부모 코루틴의 CoroutineContext로부터 부모 코루틴의 Job 추출
     launch {
-        val launchJob = coroutineContext[Job] // 자식 코투린의 CoroutinContext로부터 자식 코루틴의 Job 추출
+        val launchJob = coroutineContext[Job] // 자식 코루틴의 CoroutinContext로부터 자식 코루틴의 Job 추출
 
         println("runBlocking으로 생성된 Job과 launch로 생성된 Job은 동일하다.(${runBlockingJob === launchJob})")
     }
@@ -291,3 +291,30 @@ fun Ex_7_7_24_3() = runBlocking<Unit> {
 
     */
 }
+
+fun Ex_7_7_29() = runBlocking<Unit> {
+    launch(CoroutineName("Coroutine1")) {
+        val coroutine1Job = this.coroutineContext[Job]
+        //Job()을 통해 생성시, parent가 null이 된다. 하지만 코루틴 계층 구조를 유지하려면 parent로 Job을 넘겨주면 된다.
+        //하지만 이렇게 생성된 Job은 자동으로 실행되지 않아서, 명시적으로 complete 를 호출해야 한다.
+        val newJob = Job(parent = coroutine1Job)
+        launch(CoroutineName("Coroutine2") + newJob) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        //명시적으로 완료 호출
+        newJob.complete()
+    }
+}
+
+//runBlocking 코루틴은 실행이 완료될 때까지 호출부의 스레드를 차단하고 사용한다.
+//runBlocking의 경우 메인 스레드를 점유하고 사용한다.
+//하지만 IO를 사용하면 Main은 호출부에서 벗어나기 때문에 직접적으로 호출한 IO가 대기한다.
+fun Ex_7_7_31() = runBlocking<Unit>(Dispatchers.IO) {
+    delay(5000L)
+    println("[${Thread.currentThread().name}] 코루틴 종료")
+}
+
+//runBlocking 코루틴에 의해 호출부의 스레드가 배타적으로 사용된다는 것은 runBlocking 코루틴 하위에 생성된 코루틴도 그 호출부의 스레드를 사용할 수 있다는 의미다.
+//launch는 호출부의 스레드를 차단하지 않는다. 비동기니까
+
