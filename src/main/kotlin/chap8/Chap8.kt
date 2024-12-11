@@ -88,3 +88,74 @@ fun Ex_8_8_6() = runBlocking<Unit> {
      * [DefaultDispatcher-worker-2 @Cor2#4] 코루틴 실행
      */
 }
+
+
+
+//SupervisorJob을 사용할 때 실수.
+//launch에서 Job객체를 파라미터로 전달하면 이를 Parent로 갖는 새로운 Job객체를 만든다.
+//이에 대한 자식을 만들고 예외를 발생시키면 의도하지 않게 예외 전파를 해서 SupervisorJob의 특성을 사용할 수 없다.
+fun Ex_8_8_7() = runBlocking<Unit> {
+    launch(CoroutineName("Parent Cor") + SupervisorJob()) {
+        launch(CoroutineName("Cor1")) {
+            launch(CoroutineName("Cor3")) {
+                throw Exception("예외 발생")
+            }
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Cor2")) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+    }
+    delay(1000L)
+}
+
+//supervisorScope의 특징은 supervisorJob을 부모로하는 Job을 생성한다는 것이다.
+// 따라서 구조화할 필요가 없으며 자식이 모두 완료되면 자동 완료를 하기 때문에 명시적으로 complete()를 사용할 필요가 없다.
+fun Ex_8_8_8() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    //      └─ supervisorJob
+    //           ├─ Cor1 Job ─ Cor3 Job
+    //           └─ Cor2 Job
+    supervisorScope {
+        launch(CoroutineName("Cor1")) {
+            launch(CoroutineName("Cor3")) {
+                throw Exception("예외 발생")
+            }
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+        launch(CoroutineName("Cor2")) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+    }
+    /*
+     * Exception in thread "main @Cor1#3" java.lang.Exception: 예외 발생
+     * ...
+     * [main @Cor2#4] 코루틴 실행
+     */
+}
+
+// exceptionHandler은 상속이 가능하다.
+fun Ex_8_8_9() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    // - CoroutineScope Job
+    //      └─ Cor1 Job
+    val exceptionHandler = CoroutineExceptionHandler{ _, throwable ->
+        println("[예외 발생] $throwable")
+    }
+    CoroutineScope(exceptionHandler).launch(CoroutineName("Cor1")) {
+        throw Exception("Cor1에서 예외 발생")
+    }
+    delay(1000L)
+
+    /*
+     * [예외 발생] java.lang.Exception: Cor1에서 예외 발생
+     * Process finished with exit code 0
+     */
+}
+
