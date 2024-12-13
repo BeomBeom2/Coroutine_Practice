@@ -159,3 +159,27 @@ fun Ex_8_8_9() = runBlocking<Unit> {
      */
 }
 
+
+// Cor1이 예외를 발생시켰지만 runBlocking Job에게 예외를 전파했기 때문에,
+// Handler 객체는 예외를 처리했다고 생각하여 동작하지 않는다.
+// 결론적으로, 구조화된 코루틴상에 여러 CoroutineExceptionHandler 객체가 설정되어도
+// 마지막 예외를 전파받는 위치에 설정된 coroutineCExceptionHandler 객체만 예외를 처리한다.
+fun Ex_8_8_10() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    //      └─ Cor1 Job
+
+    val exceptionHandler = CoroutineExceptionHandler { _, throwable->
+        println("[예외 발생] $throwable")
+    }
+
+    launch(CoroutineName("Cor1") + exceptionHandler) {
+        throw Exception("Cor1에서 예외가 발생")
+    }
+    delay(1000L)
+
+    /*
+     * Exception in thread "main" java.lang.Exception: Cor1에서 예외가 발생
+     * ...
+     */
+}
