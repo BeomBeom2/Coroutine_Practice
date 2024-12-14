@@ -183,3 +183,46 @@ fun Ex_8_8_10() = runBlocking<Unit> {
      * ...
      */
 }
+
+// CoroutineExceptionHandler가 예외를 처리하도록 하는 방법은
+// CoroutineExceptionHandler 객체를 루트 Job과 함께 설정하는 방법이다.
+fun Ex_8_8_11() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    // - Job
+    //     └─ Cor1 Job
+    val coroutineContext = Job() + CoroutineExceptionHandler{
+            _, throwable ->
+        println("[예외 발생] $throwable")
+    }
+    launch(CoroutineName("Cor1") + coroutineContext) {
+        throw Exception("Cor1에 예외 발생")
+    }
+    //[예외 발생] java.lang.Exception: Cor1에 예외 발생
+}
+
+//CoroutineExceptionHandler 은 예외 전파를 제한하지 않는다. 그냥 처리하고 상위 쪽으로 예외를 전파한다.
+//SupervisorJob은 예외를 전파받지 않을 뿐, 어떤 예외가 발생했는지에 대한 정보를 자식 코루틴으로부터 전달받는다.
+//따라서, SupervisorJob 과 CoroutineExceptionHandler을 조합하여 사용하는 방법.
+fun Ex_8_8_12() = runBlocking<Unit> {
+    val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        println("[예외 발생] $throwable")
+    }
+    val supervisedScope = CoroutineScope(SupervisorJob() + exceptionHandler)
+    supervisedScope.apply {
+        launch(CoroutineName("Cor1")) {
+            throw Exception("Cor1에 예외가 발생")
+        }
+        launch(CoroutineName("Cor2")) {
+            delay(100L)
+            throw Exception("${Thread.currentThread().name}] 코루틴 실행")
+        }
+    }
+    //runBlocking은 내부에서 실행된 모든 작업(코루틴 포함)이 완료될 때까지 대기
+    //하지만 runBlocking 자체는 명시적으로 대기 시간을 주지 않으면, "즉시 실행된 작업이 완료되었는지 여부"만 확인
+    // 예제에서는 Cor2의 Job에 delay를 왜 넣어놨는지 의도는 잘 모르겠으나, 어쨋건 즉시 실행된 작업은 아니라서 100L 이상 기다려야 한다.
+    delay(1000L)
+
+    //[예외 발생] java.lang.Exception: Cor1에 예외가 발생
+    //[예외 발생] java.lang.Exception: DefaultDispatcher-worker-2 @Cor2#4] 코루틴 실행
+}
