@@ -226,3 +226,59 @@ fun Ex_8_8_12() = runBlocking<Unit> {
     //[예외 발생] java.lang.Exception: Cor1에 예외가 발생
     //[예외 발생] java.lang.Exception: DefaultDispatcher-worker-2 @Cor2#4] 코루틴 실행
 }
+
+//코루틴 빌더 함수에 대한 try catch문은 코루틴의 예외를 잡지 못한다.
+fun Ex_8_8_15() = runBlocking<Unit> {
+    //이 try-catch문은 launch 코루틴 빌더 함수 자체의 실행만 체크하며, 람다식은 예외 처리 대상이 아니다.
+    try {
+        launch(CoroutineName("Cor1")) {
+            throw Exception("Cor1에 예외가 발생")
+        }
+    } catch (e:Exception) {
+        println(e.message)
+    }
+    launch(CoroutineName("Cor2")) {
+        delay(100L)
+        println("cor2 실행 완료")
+    }
+
+    //Exception in thread "main" java.lang.Exception: Cor1에 예외가 발생
+    //...
+}
+
+//코루틴의 내부에서 발생하는 예외를 처리하려면, 비동기 처리 블록 내부에 try catch문을 사용해야 된다.
+fun Ex_8_8_15_2() = runBlocking<Unit> {
+    launch(CoroutineName("Cor1")) {
+        try {
+            throw Exception("Cor1에 예외가 발생")
+        } catch (e: Exception) {
+            println(e.message)
+        }
+    }
+    launch(CoroutineName("Cor2")) {
+        delay(100L)
+        println("Cor2 실행 완료")
+    }
+
+    //Cor1에 예외가 발생
+    //Cor2 실행 완료
+}
+
+//async 코루틴 빌더의 경우, 코루틴 실행 도중 예외가 발생해서, await()시에 결괏값이 없다면,
+//예외가 발생.
+//하지만, Deferred객체로 초기화하지 않고 곧바로 실행하면 async 블럭 내부에서 try-catch를 진행해야 한다.
+
+fun Ex_8_8_16() = runBlocking<Unit> {
+    supervisorScope {
+        val deferred: Deferred<String> = async(CoroutineName("Cor1")) {
+            throw Exception("Cor1에 예외 발생")
+        }
+        try{
+            deferred.await()
+        } catch(e:Exception) {
+            println("[노출된 예외] ${e.message}")
+        }
+    }
+    //[노출된 예외] Cor1에 예외 발생
+}
+
