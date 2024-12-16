@@ -282,3 +282,17 @@ fun Ex_8_8_16() = runBlocking<Unit> {
     //[노출된 예외] Cor1에 예외 발생
 }
 
+
+fun Ex_8_8_17() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    //     ├─ Cor1 Job
+    //     └─ Cor2 Job
+    async(CoroutineName("Cor1")) {
+        throw Exception("Cor1에 예외 발생")
+    }
+    launch(CoroutineName("Cor2")) {
+        delay(100L)
+        println("[${Thread.currentThread().name}] 코루틴 실행")
+    }
+}
