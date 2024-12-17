@@ -296,3 +296,23 @@ fun Ex_8_8_17() = runBlocking<Unit> {
         println("[${Thread.currentThread().name}] 코루틴 실행")
     }
 }
+
+fun Ex_8_8_18() = runBlocking<Unit> {
+    // - 구조
+    // - runBlocking Job
+    // - supervisor Job
+    //     ├─ Cor1 Job
+    //     └─ Cor2 Job
+    supervisorScope {
+        async(CoroutineName("Cor1")) {
+            throw Exception("Cor1에 예외 발생")
+        }
+        launch(CoroutineName("Cor2")) {
+            delay(100L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+    }
+
+    //[main @Cor2#4] 코루틴 실행
+}
+
