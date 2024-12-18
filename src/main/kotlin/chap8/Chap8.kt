@@ -316,3 +316,31 @@ fun Ex_8_8_18() = runBlocking<Unit> {
     //[main @Cor2#4] 코루틴 실행
 }
 
+
+//CancellationException 예외는 예외가 전파되지 않는다.
+//사실, cancel() 메서드를 호출하면 코루틴은 내부적으로 CancellationException을 발생시켜 취소 상태를 처리한다.
+fun Ex_8_8_20() = runBlocking<Unit> {
+    val job = launch {
+        delay(1000L)
+    }
+    job.invokeOnCompletion { exception ->
+        println(exception)
+    }
+    job.cancel()
+    //kotlinx.coroutines.JobCancellationException: StandaloneCoroutine was cancelled; job="coroutine#3":StandaloneCoroutine{Cancelled}@18be83e4
+}
+
+//withTimeout 메소드는 timeMillis 시간 내에 block을 처리하는 기능을 갖는다.
+//timeMillis 시간 내에 끝나지 않을 시, TimeoutCancellationException을 발생시키는데 이는
+//CancellationException의 서브클래스다. 따라서 예외가 부모 코루틴으로 전파되지 않고 해당 예외가 발생한 코루틴만 취소시킨다.
+fun Ex_8_8_22() = runBlocking<Unit>(CoroutineName("Parent Cor")) {
+    try {
+        withTimeout(1000L) {
+            delay(2000L)
+            println("[${Thread.currentThread().name}] 코루틴 실행")
+        }
+    } catch(e: Exception) {
+        println(e)
+    }
+    //kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1000 ms
+}
