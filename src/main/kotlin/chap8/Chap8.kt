@@ -316,7 +316,6 @@ fun Ex_8_8_18() = runBlocking<Unit> {
     //[main @Cor2#4] 코루틴 실행
 }
 
-
 //CancellationException 예외는 예외가 전파되지 않는다.
 //사실, cancel() 메서드를 호출하면 코루틴은 내부적으로 CancellationException을 발생시켜 취소 상태를 처리한다.
 fun Ex_8_8_20() = runBlocking<Unit> {
@@ -343,4 +342,17 @@ fun Ex_8_8_22() = runBlocking<Unit>(CoroutineName("Parent Cor")) {
         println(e)
     }
     //kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1000 ms
+}
+
+//시간이 끝나도 값은 반환해야하는 경우, withTimeoutOrNull을 사용해면된다.
+//시간이 끝나면 null을 반환한다.
+fun Ex_8_8_23() = runBlocking<Unit>(CoroutineName("Parent Cor")) {
+    launch(CoroutineName("Child Cor")) {
+        val result = withTimeoutOrNull(1000L) {
+            delay(2000L)
+            return@withTimeoutOrNull
+        }
+        println(result)
+    }
+    //null
 }
