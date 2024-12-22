@@ -40,16 +40,16 @@ suspend fun searchByKeyword1(keyword: String): Array<String> =
             searchFromServer(keyword)
         }
         val dbResults = try {
+            dbResultsDefferred.await()
+        } catch (e: Exception) {
+            arrayOf()
+        }
+        val serverResults = try {
             serverResultsDeferred.await()
         } catch (e: Exception) {
             arrayOf()
         }
-        val serverReults = try {
-            serverResultsDeferred.await()
-        } catch (e: Exception) {
-            arrayOf()
-        }
-        return@supervisorScope arrayOf(*dbResults, *serverReults)
+        return@supervisorScope arrayOf(*dbResults, *serverResults)
     }
 
 
@@ -77,7 +77,7 @@ fun Ex_9_9_7() = runBlocking<Unit> {
 //일시 중단 함수에서 순차적이 아닌 독립적으로 실행하려면 async 블록을 사용하여 작성하면된다.
 
 fun Ex_9_9_13() = runBlocking<Unit> {
-    println("[결과] ${searchByKeyword("keyword").toList()}")
+    println("[결과] ${searchByKeyword1("keyword").toList()}")
 
     //[결과] [[DB]keyword1, [DB]keyword2, [Server]keyword1, [Server]keyword2]
 }
