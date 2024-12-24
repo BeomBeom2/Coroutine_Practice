@@ -73,3 +73,44 @@ fun Ex_10_10_6() = runBlocking<Unit> {
      * 4. runBlocking 이 메인 스레드에 분배돼 작업이 다시 재개됩니다.
      */
 }
+
+
+fun Ex_10_10_7() = runBlocking<Unit> {
+    val job = launch {
+        while(this.isActive) {
+            println("작업중")
+        }
+    }
+
+    delay(100L)
+    job.cancel()
+    //개념이 Ex_10_10_6와 이어진다. delay로 runBlocking 코루틴에서 launch 코루틴으로 넘어오는데 while 내부로 무한 반복이 되고 있다.
+
+    /*
+     * 작업중
+     * 작업중
+     * 작업중
+     * ...
+     */
+}
+
+fun Ex_10_10_8() = runBlocking<Unit> {
+    val job = launch {
+        while(this.isActive) {
+            println("작업중")
+            yield()
+        }
+    }
+
+    delay(100L)
+    job.cancel()
+    //개념이 Ex_10_10_6와 이어진다. delay로 runBlocking 코루틴에서 launch 코루틴으로 넘어오는데 while 내부로 무한 반복이 되고 있다.
+
+    /*
+     * 작업중
+     * 작업중
+     * 작업중
+     * ...
+     * (멈춤)
+     */
+}
