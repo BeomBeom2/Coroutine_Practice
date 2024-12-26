@@ -50,3 +50,42 @@ fun Ex_11_11_3() = runBlocking<Unit> {
 
 //위에 있는 mutex의 lock(), unlock() 쌍을 처리해주는 메소드인 withLock이다.
 //코드가 복잡해질수록 실수할 확률이 높기 때문에, withLock을 사용해서 처리하면 편리하다.
+fun Ex_11_11_4() = runBlocking<Unit> {
+    withContext(Dispatchers.Default) {
+        repeat(1000) {
+            launch {
+                mutex.withLock {
+                    count += 1
+                }
+            }
+        }
+    }
+    println("count = $count")
+
+    //count = 1000
+}
+
+//Mutex 객체에 락이 걸려 있으면 코루틴은 기존의 락이 해제될 때 까지 스레드를 양보하고 일시 중단한다.
+//ReentrantLock은 코루틴은 락이 해제될 때까지 lock을 호출한 스레드를 블로킹하고 기다린다.
+//즉, 락이 해제될 때까지 lock을 호출한 스레드를 다른 코루틴이 사용할 수 없다.
+//이런 특성 때문에 코루틴에서는 ReentrantLock대신 Mutex 객체를 권장한다.
+
+
+//원자성 있는 데이터 구조를 사용해 경쟁 상태 문제를 해결하기
+var count1 = AtomicInteger(0)
+
+fun Ex_11_11_7() = runBlocking<Unit> {
+    withContext(Dispatchers.Default) {
+        repeat(10000) {
+            launch {
+                count1.getAndUpdate {
+                    //다른 스레드가 연산을 실행 중이면 코루틴은 스레드를 블로킹시키고 대기한다.
+                    it + 1
+                }
+            }
+        }
+    }
+    println("count = $count1")
+
+    //count = 10000
+}
