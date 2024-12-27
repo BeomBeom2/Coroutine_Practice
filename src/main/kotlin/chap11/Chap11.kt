@@ -1,11 +1,8 @@
 package org.example.chap11
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -88,4 +85,116 @@ fun Ex_11_11_7() = runBlocking<Unit> {
     println("count = $count1")
 
     //count = 10000
+}
+
+//AtomicReference 를 사용해 객체 참조에 원자성 부여.
+//원자성 있는 객체를 사용 시, 한계점은 원자성 있는 객체가 스레드를 블로킹 시킬 수 있다는 점이다.
+data class Counter(val name : String, val count : Int)
+val atomicCounter = AtomicReference(Counter("MyCounter", 0))
+
+fun Ex_11_11_8() = runBlocking<Unit> {
+    withContext(Dispatchers.Default) {
+        repeat(10000) {
+            launch {
+                atomicCounter.getAndUpdate {
+                    it.copy(count = it.count +1)
+                }
+            }
+        }
+    }
+    println(atomicCounter.get())
+}
+
+//다음은 실수할 수 있는 코드이다. count1에 대한 get 함수를 실행해 count 값을 가져와 count에 대해
+//set 함수를 실행해 get을 통해 가져온 값에 1을 더하고 있다. 이때 get 함수가 실행되고 나서 set 함수 실행 전에 다른 스레드에서
+// 읽기 또는 쓰기 연산을 실행할 수 있으므로 경쟁 상태 문제가 생긴다.
+fun Ex_11_11_10() = runBlocking<Unit> {
+    withContext(Dispatchers.Default) {
+        repeat(10000) {
+            launch {
+                val currentCount = count1.get()
+
+                count1.set(currentCount + 1)
+            }
+        }
+    }
+    println("count = $count1")
+    //count = 9094
+}
+
+fun Ex_11_11_11() = runBlocking<Unit> {
+    withContext(Dispatchers.Default) {
+        repeat(10000) {
+            launch {
+                count1.incrementAndGet()
+            }
+        }
+    }
+    println("count = $count1")
+    //count = 10000
+}
+
+//기본적으로 start는 CoroutineStart.DEFAULT가 기본 값이다.
+//실행 대기 상태에 있는 Job을 취소(cancel())하면 해당 Job은 해제된다.
+//하지만 CoroutineStart.ATOMIC을 사용하는 경우는 실행 대기 상태에서 취소를 방지하기 위한 옵션이다.
+fun Ex_11_11_14() = runBlocking<Unit> {
+    val job = launch(start = CoroutineStart.ATOMIC) {
+        println("작업1")
+    }
+    job.cancel()
+    println("작업2")
+
+    /*
+     * 작업1
+     * 작업2
+     */
+}
+//CoroutineStart.UNDISPATCHED의 경우, 최초로 실행시 작업 대기열에 들어가지 않고,
+//호출자 스레드에서 곧바로 실행되는 것이다.
+//대신, 도중에 실행 대기가 되는 경우 다시 작업 대기열로 이동한 후에 시작된다.
+fun Ex_11_11_15() = runBlocking<Unit> {
+    launch(start = CoroutineStart.UNDISPATCHED) {
+        println("작업1")
+    }
+    println("작업2")
+}
+
+fun Ex_11_11_21() = runBlocking<Unit> {
+    launch(Dispatchers.Unconfined) {
+        println("일시 중단 전 실행 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("일시 중단 후 실행 스레드: ${Thread.currentThread().name}")
+    }
+
+    /*
+     * 일시 중단 전 실행 스레드: main
+     * 일시 중단 후 실행 스레드: kotlinx.coroutines.DefaultExecutor
+     */
+}
+
+
+//언뜻보면 Dispatchers.Unconfined와 CoroutineStart.UNDISPATCHED가 같다고 생각할 수 있다.
+//하지만 그 차이는 Job이 재게 됐을 때 차이가 난다.
+//CoroutineStart.UNDISPATCHED가 적용된 코루틴은 runBlocking 코루틴으로부터 전달받은 디스패처(Main)를 사용해 재개된다.
+//Dispatchers.Unconfined는 자신을 재개시킨 스레드에서 재개되므로 delay를 실행하는 데 사용하는 스레드에서 재개된다.
+fun Ex_11_11_22() = runBlocking<Unit> {
+    println("runBlocking 코루틴 실행 스레드: ${Thread.currentThread().name}")
+    launch(start = CoroutineStart.UNDISPATCHED) {
+        println("[CoroutineStart.UNDISPATCHED] 코루틴이 시작 시 사용하는 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("[CoroutineStart.UNDISPATCHED] 코루틴이 재개 시 사용하는 스레드: ${Thread.currentThread().name}")
+    }.join()
+    launch(context = Dispatchers.Unconfined) {
+        println("[Dispatchers.Unconfined] 코루틴이 시작 시 사용하는 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("[Dispatchers.Unconfined] 코루틴이 재개 시 사용하는 스레드: ${Thread.currentThread().name}")
+    }.join()
+
+    /*
+     * runBlocking 코루틴 실행 스레드: main
+     * [CoroutineStart.UNDISPATCHED] 코루틴이 시작 시 사용하는 스레드: main
+     * [CoroutineStart.UNDISPATCHED] 코루틴이 재개 시 사용하는 스레드: main
+     * [Dispatchers.Unconfined] 코루틴이 시작 시 사용하는 스레드: main
+     * [Dispatchers.Unconfined] 코루틴이 재개 시 사용하는 스레드: kotlinx.coroutines.DefaultExecutor
+     */
 }
