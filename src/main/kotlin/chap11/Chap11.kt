@@ -158,3 +158,17 @@ fun Ex_11_11_15() = runBlocking<Unit> {
     }
     println("작업2")
 }
+
+fun Ex_11_11_21() = runBlocking<Unit> {
+    launch(Dispatchers.Unconfined) {
+        println("일시 중단 전 실행 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("일시 중단 후 실행 스레드: ${Thread.currentThread().name}")
+    }
+
+    /*
+     * 일시 중단 전 실행 스레드: main
+     * 일시 중단 후 실행 스레드: kotlinx.coroutines.DefaultExecutor
+     */
+}
+
