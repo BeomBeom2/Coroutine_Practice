@@ -8,6 +8,7 @@ import org.example.chap7.*
 import org.example.chap8.*
 import org.example.chap9.*
 import org.example.chap10.*
+import org.example.chap11.*
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main() = runBlocking<Unit>(context = CoroutineName("Main")) {
@@ -107,5 +108,17 @@ fun main() = runBlocking<Unit>(context = CoroutineName("Main")) {
 
     //Ex_10_10_2()
 
-    Ex_10_10_4()
+    //Ex_10_10_4()
+
+    //Ex_11_11_2()
+
+    //Ex_11_11_3()
+
+    //Ex_11_11_4()
+
+    //Ex_11_11_7()
+
+    //Ex_11_11_10()
+
+    Ex_11_11_11()
 }

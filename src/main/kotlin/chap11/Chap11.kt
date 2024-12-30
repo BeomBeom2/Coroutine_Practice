@@ -172,3 +172,29 @@ fun Ex_11_11_21() = runBlocking<Unit> {
      */
 }
 
+
+//언뜻보면 Dispatchers.Unconfined와 CoroutineStart.UNDISPATCHED가 같다고 생각할 수 있다.
+//하지만 그 차이는 Job이 재게 됐을 때 차이가 난다.
+//CoroutineStart.UNDISPATCHED가 적용된 코루틴은 runBlocking 코루틴으로부터 전달받은 디스패처(Main)를 사용해 재개된다.
+//Dispatchers.Unconfined는 자신을 재개시킨 스레드에서 재개되므로 delay를 실행하는 데 사용하는 스레드에서 재개된다.
+fun Ex_11_11_22() = runBlocking<Unit> {
+    println("runBlocking 코루틴 실행 스레드: ${Thread.currentThread().name}")
+    launch(start = CoroutineStart.UNDISPATCHED) {
+        println("[CoroutineStart.UNDISPATCHED] 코루틴이 시작 시 사용하는 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("[CoroutineStart.UNDISPATCHED] 코루틴이 재개 시 사용하는 스레드: ${Thread.currentThread().name}")
+    }.join()
+    launch(context = Dispatchers.Unconfined) {
+        println("[Dispatchers.Unconfined] 코루틴이 시작 시 사용하는 스레드: ${Thread.currentThread().name}")
+        delay(1000L)
+        println("[Dispatchers.Unconfined] 코루틴이 재개 시 사용하는 스레드: ${Thread.currentThread().name}")
+    }.join()
+
+    /*
+     * runBlocking 코루틴 실행 스레드: main
+     * [CoroutineStart.UNDISPATCHED] 코루틴이 시작 시 사용하는 스레드: main
+     * [CoroutineStart.UNDISPATCHED] 코루틴이 재개 시 사용하는 스레드: main
+     * [Dispatchers.Unconfined] 코루틴이 시작 시 사용하는 스레드: main
+     * [Dispatchers.Unconfined] 코루틴이 재개 시 사용하는 스레드: kotlinx.coroutines.DefaultExecutor
+     */
+}
