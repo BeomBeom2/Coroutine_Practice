@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.resume
 
 //1. 메모리 가시성, 스레드가 변수를 변경시킬 때 메인 메모리가 아닌 CPU 캐시를 사용할 경우 CPU 캐시의 값이 메인 메모리에 전파되는 데 약간의 시간이 결려
 // CPU 캐시와 메인 메모리 간에 데이터 불일치 문제가 생긴다.
@@ -197,4 +198,22 @@ fun Ex_11_11_22() = runBlocking<Unit> {
      * [Dispatchers.Unconfined] 코루틴이 시작 시 사용하는 스레드: main
      * [Dispatchers.Unconfined] 코루틴이 재개 시 사용하는 스레드: kotlinx.coroutines.DefaultExecutor
      */
+}
+
+//Continuation 객체는 코루틴의 일시 중단 시점에 코루틴의 실행 상태를 저장하며, 여기에는 다음에 실행해야 할 작업에 대한 정보가 포함된다.
+//따라서 Continuation 객체를 사용하면 코루틴 재개 시 코루틴의 상태를 복원하고 이어서 작업을 진행할 수 있다.
+//우리가 이전까지 다뤘던 코루틴 API는 고수준 API 여서 Continuation 객체를 직접 사용하지는 않았다.
+
+fun Ex_11_11_24() = runBlocking<Unit> {
+    println("runBlocking 코루틴 일시 중단 호출")
+    suspendCancellableCoroutine<Unit> { continuation:
+        CancellableContinuation<Unit> ->
+            println("일시 중단 시점의 runBlocking 코루틴 실행 정보 : ${continuation.context}")
+            continuation.resume(Unit)
+    }
+    println("일시 중단된 코루틴이 재개되지 않아 실행되지 않는 코드")
+
+    //runBlocking 코루틴 일시 중단 호출
+    //일시 중단 시점의 runBlocking 코루틴 실행 정보 : [CoroutineId(2), "coroutine#2":BlockingCoroutine{Active}@66048bfd, BlockingEventLoop@61443d8f]
+    //일시 중단된 코루틴이 재개되지 않아 실행되지 않는 코드
 }
