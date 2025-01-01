@@ -122,5 +122,7 @@ fun main() = runBlocking<Unit>(context = CoroutineName("Main")) {
 
     //Ex_11_11_11()
 
-    Ex_11_11_24()
+    //Ex_11_11_24()
+
+    Ex_11_11_25()
 }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 
 //1. 메모리 가시성, 스레드가 변수를 변경시킬 때 메인 메모리가 아닌 CPU 캐시를 사용할 경우 CPU 캐시의 값이 메인 메모리에 전파되는 데 약간의 시간이 결려
@@ -216,4 +217,15 @@ fun Ex_11_11_24() = runBlocking<Unit> {
     //runBlocking 코루틴 일시 중단 호출
     //일시 중단 시점의 runBlocking 코루틴 실행 정보 : [CoroutineId(2), "coroutine#2":BlockingCoroutine{Active}@66048bfd, BlockingEventLoop@61443d8f]
     //일시 중단된 코루틴이 재개되지 않아 실행되지 않는 코드
+}
+
+fun Ex_11_11_25() = runBlocking<Unit> {
+    val result = suspendCancellableCoroutine<String> { continuation:
+        CancellableContinuation<String> -> //runBlocking 코루틴 일시 중단 시작
+            thread {
+                Thread.sleep(1000L)
+                continuation.resume("실행 결과") //runBlocking 코루틴 재개
+            }
+    }
+    println(result)
 }
