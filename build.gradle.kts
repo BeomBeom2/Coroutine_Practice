@@ -14,6 +14,12 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.0")
     testImplementation(kotlin("test"))
+    implementation(kotlin("test"))
+
+
+    implementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    implementation("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+
 }
 
 
