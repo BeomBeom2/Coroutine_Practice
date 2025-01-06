@@ -1,5 +1,8 @@
 package org.example.chap12
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -69,5 +72,67 @@ class StubUserNameRepository : UserNameRepository {
 
     override fun getNameByUserId(id: String): String {
         TODO("Not yet implemented")
+    }
+}
+
+//userNameMap을 주입받도록하는 조금 더 유연한 StubRepo
+class StubUserNameRepository1(
+    private val userNameMap: Map<String, String>
+) : UserNameRepository {
+    override fun saveUserName(id: String, name: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun getNameByUserId(id: String): String {
+        return userNameMap[id] ?: ""
+    }
+}
+
+//페이크 : 실제 객체와 비슷하게 동작하도록 구현된 모방 객체이다.
+class FakeUserPhoneNumberRepository : UserPhoneNumberRepository {
+    private val userPhoneNumberMap = mutableMapOf<String, String>()
+    override fun saveUserPhoneNumber(id: String, phoneNumber: String) {
+        userPhoneNumberMap[id] = phoneNumber
+    }
+
+    override fun getPhoneNumberByUserId(id: String): String {
+        return userPhoneNumberMap[id] ?: ""
+    }
+}
+
+class UserProfileFetcher(
+    private val userNameRepository : UserNameRepository,
+    private val userPhoneNumberRepository : UserPhoneNumberRepository
+) {
+    fun getUserProfileById(id : String) : UserProfile {
+        val userName = userNameRepository.getNameByUserId(id)
+        val userPhoneNumber = userPhoneNumberRepository.getPhoneNumberByUserId(id)
+        return UserProfile(
+            id = id,
+            name = userName,
+            phoneNumber = userPhoneNumber
+        )
+    }
+}
+
+class UserProfileFetcherTest {
+    @Test
+    fun `UserNameRepository가 반환하는 이름이 홍길동이면 UserProfileFetcher에서 UserProfile를 가져왔을 때 이름이 홍길동이어야 한다`() {
+        // Given
+        val userProfileFetcher = UserProfileFetcher(
+            userNameRepository = StubUserNameRepository1(
+                userNameMap = mapOf<String, String>(
+                    "0x1111" to "홍길동",
+                    "0x2222" to "조세영",
+                )
+            ),
+            userPhoneNumberRepository = FakeUserPhoneNumberRepository()
+        )
+
+        // When
+        val userProfile = userProfileFetcher.getUserProfileById("0x1111")
+
+        // Then
+        assertEquals("홍길동", userProfile.name)
     }
 }
