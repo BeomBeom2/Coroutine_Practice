@@ -135,4 +135,54 @@ class UserProfileFetcherTest {
         // Then
         assertEquals("홍길동", userProfile.name)
     }
+
+    @Test
+    fun `UserPhoneNumberRepository에 휴대폰 번호가 저장돼 있으면, UserProfile를 가져왔을 때 해당 휴대폰 번호가 반환돼야 한다`() {
+        // Given
+        val userProfileFetcher = UserProfileFetcher(
+            userNameRepository = StubUserNameRepository1(
+                userNameMap = mapOf<String, String>(
+                    "0x1111" to "홍길동",
+                    "0x2222" to "조세영",
+                )
+            ),
+            userPhoneNumberRepository = FakeUserPhoneNumberRepository().apply {
+                this.saveUserPhoneNumber("0x1111", "010-xxxx-xxxx")
+            }
+        )
+
+        // When
+        val userProfile = userProfileFetcher.getUserProfileById("0x1111")
+
+        // Then
+        assertEquals("010-xxxx-xxxx", userProfile.phoneNumber)
+    }
+
+    //테스트를 위해 매번 인터페이스를 만들지 않고 쉽게 사용할 수 있는 Mokito나 MockK같은 라이브러리들이 있다.
+}
+
+class RepeatAddUseCase {
+    suspend fun add(repeatTime: Int) : Int = withContext(Dispatchers.Default) {
+        var result = 0
+        repeat(repeatTime) {
+            result += 1
+        }
+        return@withContext result
+    }
+}
+
+class RepeatAddUseCaseTest {
+    @Test
+    fun `100번 더하면 100이 반환된다`() = runBlocking<Unit> {
+        // Given
+        val repeatAddUseCase = RepeatAddUseCase()
+
+        // When
+        val result =
+            repeatAddUseCase.add(100)
+
+
+        // Then
+        assertEquals(100, result)
+    }
 }
