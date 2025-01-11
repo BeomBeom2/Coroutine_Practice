@@ -1,8 +1,9 @@
 package org.example.chap12
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestDispatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -92,7 +93,7 @@ class StubUserNameRepository1(
 class FakeUserPhoneNumberRepository : UserPhoneNumberRepository {
     private val userPhoneNumberMap = mutableMapOf<String, String>()
     override fun saveUserPhoneNumber(id: String, phoneNumber: String) {
-        userPhoneNumberMap[id] = phoneNumber
+       userPhoneNumberMap[id] = phoneNumber
     }
 
     override fun getPhoneNumberByUserId(id: String): String {
@@ -184,5 +185,109 @@ class RepeatAddUseCaseTest {
 
         // Then
         assertEquals(100, result)
+    }
+}
+
+class RepeatAddWithDelayUseCase {
+    suspend fun add(repeatTime : Int) : Int {
+        var result = 0
+        repeat(repeatTime) {
+            delay(100L)
+            result += 1
+        }
+        return result
+    }
+}
+
+class RepeatAddWithDelayUseCaseTest {
+    @Test
+    fun `100번 더하면 100이 반환된다`() {
+        val testCoroutineScheduler = TestCoroutineScheduler()
+        val testDispatcher = StandardTestDispatcher(testCoroutineScheduler)
+
+        val repeatAddUseCase = RepeatAddWithDelayUseCase()
+
+        var result = 0
+        CoroutineScope(testDispatcher).launch {
+            result = repeatAddUseCase.add(100)
+            assertEquals(100, result)
+        }
+
+        testCoroutineScheduler.advanceUntilIdle()
+        assertEquals(100, result)
+    }
+}
+
+class TestCoroutineScheduler {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `가상 시간 조절 테스트`(): Unit {
+        // 테스트 환경 설정
+        val testCoroutineScheduler = TestCoroutineScheduler()
+
+        testCoroutineScheduler.advanceTimeBy(5000L) //가상 시간에서 5초
+        assertEquals(5000L, testCoroutineScheduler.currentTime) //현재 시간이 5초임을 확인
+
+        testCoroutineScheduler.advanceTimeBy(6000L)
+        assertEquals(11000L, testCoroutineScheduler.currentTime)
+    }
+    //TestCoroutineScheduler 객체를 사용해 직접 가장 시간을 컨드롤 하지는 않지만,
+    //이후 다룰 코루틴 테스트 라이브러리의 기능을 이해하는 데 도움이 된다.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `가상 시간 위에서 테스트 진행`() {
+        // 테스트 환경 설정
+        val testCoroutineScheduler : TestCoroutineScheduler =
+            TestCoroutineScheduler()
+        val testDispatcher : TestDispatcher = StandardTestDispatcher(scheduler = testCoroutineScheduler)
+        val testCoroutineScope : CoroutineScope = CoroutineScope(context = testDispatcher)
+
+        // Given
+        var result = 0
+
+        // When
+        testCoroutineScope.launch {
+            delay(10000L)
+            result = 1
+            delay(10000L)
+            result = 2
+            println(Thread.currentThread().name)
+        }
+
+        // Then
+        assertEquals(0, result)
+        testCoroutineScheduler.advanceTimeBy(5000L)
+        assertEquals(0, result)
+        testCoroutineScheduler.advanceTimeBy(6000L)
+        assertEquals(1, result)
+        testCoroutineScheduler.advanceTimeBy(11000L)
+        assertEquals(2, result)
+
+    }
+
+    @Test
+    fun `advanceUntilIdle의 동작 살펴보기`() {
+        // 테스트 환경 설정
+        val testCoroutineScheduler : TestCoroutineScheduler = TestCoroutineScheduler()
+        val testDispatcher : TestDispatcher = StandardTestDispatcher(scheduler = testCoroutineScheduler)
+        val testCoroutineScope = CoroutineScope(context = testDispatcher)
+
+        // Given
+        var result = 0
+
+        // When
+        testCoroutineScope.launch {
+            delay(10000L)
+            result = 1
+            delay(10_000L)
+            result = 2
+        }
+
+        // testCoroutineScheduler 객체를 사용한 모든 코루틴 작업이 실행 완료될 때까지 가상 시간이 흐르게 된다.
+        testCoroutineScheduler.advanceUntilIdle()
+
+
+        // Then
+        assertEquals(2, result)
     }
 }
