@@ -1,9 +1,8 @@
 package org.example.chap12
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.*
 import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.TestDispatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -286,8 +285,94 @@ class TestCoroutineScheduler {
         // testCoroutineScheduler 객체를 사용한 모든 코루틴 작업이 실행 완료될 때까지 가상 시간이 흐르게 된다.
         testCoroutineScheduler.advanceUntilIdle()
 
+        // Then
+        assertEquals(2, result)
+    }
+
+    @Test
+    fun `StandardTestDispatcher 사용하기`() {
+        // testDispatcher 함수 내부에서 TestCoroutineScheduler 을 자동으로 생성
+        val testDispatcher : TestDispatcher = StandardTestDispatcher()
+        val testCoroutineScope = CoroutineScope(context = testDispatcher)
+
+        // Given
+        var result = 0
+
+        // When
+        testCoroutineScope.launch {
+            delay(10000L)
+            result = 1
+            delay(10_000L)
+            result = 2
+        }
+
+        // testCoroutineScope 내부의 코루틴이 모두 실행되게 만듦
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
+        assertEquals(2, result)
+    }
+
+
+    //TestScope 함수를 호출하면 내부에 TestDispatcher 객체를 가진 TestScope 객체가 반환된다.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `TestScope 사용하기`() {
+        //테스트 환경 설정
+        val testCoroutineScope: TestScope = TestScope()
+
+        //Given
+        var result = 0
+
+        //When
+        testCoroutineScope.launch {
+            delay(10_000L)
+            result = 1
+            delay(10_000L)
+            result = 2
+        }
+            //testCoroutineScope 내부의 코루틴이 모두 실행되게 만듦
+            testCoroutineScope.advanceUntilIdle()
+
+            assertEquals(2, result)
+    }
+
+
+    @Test
+    fun `runTest 사용하기()`() {
+        //Given
+        var result = 0
+
+        //When
+        //runTest 람다식은 그 코루틴 내부에서일시 중단 함수가 실행되더라고 작업이 곧바로 실행 완료될 수 있도록 가상 시간을
+        //흐르게 한다는 기능을 가진 코루틴 빌더.
+        //runBlocking 으로 감쌌다면 실제로 20초 뒤에 결과를 알 수 있을 것이다.
+        runTest {
+            delay(10000L)
+            result = 1
+            delay(10000L)
+            result = 2
+        }
+
+        //Then
+        assertEquals(2, result)
+    }
+
+    //코루틴 라이브러리 구성 요소의 포함관계
+    // runTest > TestScope > StandardTestDispatcher > TestCoroutineScheduler
+
+    @Test
+    fun `runTest로 테스트 감싸기`() = runTest {
+        //Given
+        var result = 0
+
+        //When
+        delay(10000L)
+        result = 1
+        delay(10000L)
+        result = 2
+
+        //Then
         assertEquals(2, result)
     }
 }
