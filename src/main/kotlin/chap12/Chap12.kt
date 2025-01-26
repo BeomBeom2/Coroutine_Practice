@@ -375,4 +375,26 @@ class TestCoroutineScheduler {
         //Then
         assertEquals(2, result)
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `runTest 내부에서 advanceUntilIdle 사용하기()`() = runTest {
+        //this : TestScope
+        var result = 0
+        launch {
+            delay(1000L)
+            result = 1
+        }
+
+        // 가상 시간 : 0ms, result = 0
+        println("가상 시간 : ${this.currentTime}ms, result = ${result}")
+        advanceUntilIdle()
+        // 가상 시간 : 1000ms, result = 1
+        println("가상 시간 : ${this.currentTime}ms, result = ${result}")
+
+        /*
+         * 가상 시간 : 0ms, result = 0
+         * 가상 시간 : 1000ms, result = 1
+         */
+    }
 }
