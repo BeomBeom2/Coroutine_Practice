@@ -268,66 +268,6 @@ fun Ex_8_8_15_2() = runBlocking<Unit> {
 //예외가 발생.
 //하지만, Deferred객체로 초기화하지 않고 곧바로 실행하면 async 블럭 내부에서 try-catch를 진행해야 한다.
 
-fun Ex_8_8_16() = runBlocking<Unit> {
-    supervisorScope {
-        val deferred: Deferred<String> = async(CoroutineName("Cor1")) {
-            throw Exception("Cor1에 예외 발생")
-        }
-        try{
-            deferred.await()
-        } catch(e:Exception) {
-            println("[노출된 예외] ${e.message}")
-        }
-    }
-    //[노출된 예외] Cor1에 예외 발생
-}
-
-
-fun Ex_8_8_17() = runBlocking<Unit> {
-    // - 구조
-    // - runBlocking Job
-    //     ├─ Cor1 Job
-    //     └─ Cor2 Job
-    async(CoroutineName("Cor1")) {
-        throw Exception("Cor1에 예외 발생")
-    }
-    launch(CoroutineName("Cor2")) {
-        delay(100L)
-        println("[${Thread.currentThread().name}] 코루틴 실행")
-    }
-}
-
-fun Ex_8_8_18() = runBlocking<Unit> {
-    // - 구조
-    // - runBlocking Job
-    // - supervisor Job
-    //     ├─ Cor1 Job
-    //     └─ Cor2 Job
-    supervisorScope {
-        async(CoroutineName("Cor1")) {
-            throw Exception("Cor1에 예외 발생")
-        }
-        launch(CoroutineName("Cor2")) {
-            delay(100L)
-            println("[${Thread.currentThread().name}] 코루틴 실행")
-        }
-    }
-
-    //[main @Cor2#4] 코루틴 실행
-}
-
-//CancellationException 예외는 예외가 전파되지 않는다.
-//사실, cancel() 메서드를 호출하면 코루틴은 내부적으로 CancellationException을 발생시켜 취소 상태를 처리한다.
-fun Ex_8_8_20() = runBlocking<Unit> {
-    val job = launch {
-        delay(1000L)
-    }
-    job.invokeOnCompletion { exception ->
-        println(exception)
-    }
-    job.cancel()
-    //kotlinx.coroutines.JobCancellationException: StandaloneCoroutine was cancelled; job="coroutine#3":StandaloneCoroutine{Cancelled}@18be83e4
-}
 
 //withTimeout 메소드는 timeMillis 시간 내에 block을 처리하는 기능을 갖는다.
 //timeMillis 시간 내에 끝나지 않을 시, TimeoutCancellationException을 발생시키는데 이는
